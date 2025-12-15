@@ -1,56 +1,61 @@
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
+
+// Use Render port or fallback for local dev
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5176', 'http://localhost:5174', 'http://localhost:5173'],
+  origin: ['http://localhost:5176', 'http://localhost:5174', 'http://localhost:5173'], // add your frontend host here later
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-// Parse JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Import Routes from src folder
+// Import your routes
 const authRoutes = require("./src/routes/auth");
-const transactionRoutes = require("./src/routes/transactions"); // Fixed import
+const transactionRoutes = require("./src/routes/transactions");
 
-// Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/transactions", transactionRoutes); // Use the transaction routes
+app.use("/api/transactions", transactionRoutes);
 
-// Health Check
+// Health check route
 app.get("/api/health", (req, res) => {
+  const state = mongoose.connection.readyState;
   res.json({
-    status: "OK",
-    message: "Finance App Backend is running",
+    server: "running",
+    database:
+      state === 1 ? "connected" :
+      state === 2 ? "connecting" :
+      "disconnected",
     timestamp: new Date().toISOString()
   });
 });
 
-// Remove the demo transaction endpoints since we're using routes
-// (Delete everything from "In-memory storage" to "GET transaction summary")
+// MongoDB connection
+if (!process.env.MONGODB_URI) {
+  console.error("❌ MONGODB_URI not set in environment variables");
+  process.exit(1);
+}
 
-// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("MongoDB connected successfully"))
+  .then(() => console.log("✅ MongoDB connected successfully"))
   .catch(err => {
-    console.error("MongoDB connection error:", err.message);
-    console.log("Running in demo mode without MongoDB");
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1); // stop app if DB fails
   });
 
-// Start Server
+// Start server
 app.listen(PORT, () => {
-  console.log("Server running on: http://localhost:" + PORT);
-  console.log("Health Check: http://localhost:" + PORT + "/api/health");
-  console.log("Auth: http://localhost:" + PORT + "/api/auth");
-  console.log("Transactions: http://localhost:" + PORT + "/api/transactions");
-  console.log("Summary: http://localhost:" + PORT + "/api/transactions/summary");
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Health Check: http://localhost:${PORT}/api/health`);
+  console.log(`Auth Routes: http://localhost:${PORT}/api/auth`);
+  console.log(`Transaction Routes: http://localhost:${PORT}/api/transactions`);
 });
