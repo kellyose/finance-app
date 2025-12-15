@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5176', 'http://localhost:5178', 'http://localhost:5173'],
+  origin: ['http://localhost:5176', 'http://localhost:5174', 'http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -39,7 +39,7 @@ app.get("/api/health", (req, res) => {
 // (Delete everything from "In-memory storage" to "GET transaction summary")
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/finance-app")
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected successfully"))
   .catch(err => {
     console.error("MongoDB connection error:", err.message);
